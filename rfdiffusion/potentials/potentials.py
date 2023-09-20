@@ -1,12 +1,27 @@
 import torch
-import numpy as np 
-from rfdiffusion.util import generate_Cbeta
+import logging
 
-class Potential:
+from abc import ABCMeta, abstractmethod
+
+logger = logging.getLogger(__name__)
+class PotentialMeta(ABCMeta):
+    """Meta class for registering implemented potentials"""
+    implemented_potentials = {}
+
+    def __new__(mcls, name, bases, attrs):
+        new_class = super().__new__(mcls, name, bases, attrs)
+
+        # register all implemented potentials
+        if len(new_class.__abstractmethods__) == 0:
+            mcls.implemented_potentials[name] = new_class
+        return new_class
+
+
+class Potential(metaclass=PotentialMeta):
     '''
         Interface class that defines the functions a potential must implement
     '''
-
+    @abstractmethod
     def compute(self, xyz):
         '''
             Given the current structure of the model prediction, return the current
@@ -454,17 +469,8 @@ class substrate_contacts(Potential):
             self.motif_frame = xyz[rand_idx[0],:4]
             self.motif_mapping = [(rand_idx, i) for i in range(4)]
 
-# Dictionary of types of potentials indexed by name of potential. Used by PotentialManager.
-# If you implement a new potential you must add it to this dictionary for it to be used by
-# the PotentialManager
-implemented_potentials = { 'monomer_ROG':          monomer_ROG,
-                           'binder_ROG':           binder_ROG,
-                           'dimer_ROG':            dimer_ROG,
-                           'binder_ncontacts':     binder_ncontacts,
-                           'interface_ncontacts':  interface_ncontacts,
-                           'monomer_contacts':     monomer_contacts,
-                           'olig_contacts':        olig_contacts,
-                           'substrate_contacts':    substrate_contacts}
+
+implemented_potentials = PotentialMeta.implemented_potentials
 
 require_binderlen      = { 'binder_ROG',
                            'binder_distance_ReLU',
@@ -472,4 +478,3 @@ require_binderlen      = { 'binder_ROG',
                            'dimer_ROG',
                            'binder_ncontacts',
                            'interface_ncontacts'}
-
