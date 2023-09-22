@@ -26,7 +26,15 @@ from rfdiffusion.inference import utils as iu
 from hydra.core.hydra_config import HydraConfig
 import numpy as np
 import random
+import importlib
 import glob
+
+
+def import_module_from_file(module_name, file_path):
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def make_deterministic(seed=0):
@@ -40,6 +48,12 @@ def main(conf: HydraConfig) -> None:
     log = logging.getLogger(__name__)
     if conf.inference.deterministic:
         make_deterministic()
+
+    if conf.inference.extra_module:
+        import_module_from_file(
+            "extra_module", conf.inference.extra_module
+        )
+        log.info(f"Loaded extra module from {conf.inference.extra_module}")
 
     # Check for available GPU and print result of check
     if torch.cuda.is_available():
