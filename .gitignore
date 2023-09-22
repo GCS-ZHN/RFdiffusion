@@ -5,6 +5,7 @@ models/
 schedules/
 
 examples/ppi_scaffolds
+examples/outputs
 
 tests/.results.json
 tests/input_pdbs

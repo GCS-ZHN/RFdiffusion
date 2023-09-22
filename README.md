@@ -132,8 +132,8 @@ In this section we will demonstrate how to run diffusion.
 </p>
 
 
-### Running the diffusion script
-The actual script you will execute is called `scripts/run_inference.py`. There are many ways to run it, governed by hydra configs.
+### Running the diffusion command
+The actual command you will execute is called `rfdiffusion`. There are many ways to run it, governed by hydra configs.
 [Hydra configs](https://hydra.cc/docs/configure_hydra/intro/) are a nice way of being able to specify many different options, with sensible defaults drawn *directly* from the model checkpoint, so inference should always, by default, match training.
 What this means is that the default values in `config/inference/base.yml` might not match the actual values used during inference, with a specific checkpoint. This is all handled under the hood.
 
@@ -148,7 +148,7 @@ For this, we just need to specify three things:
 3. The number of designs we want
 
 ```
-./scripts/run_inference.py 'contigmap.contigs=[150-150]' inference.output_prefix=test_outputs/test inference.num_designs=10
+rfdiffusion 'contigmap.contigs=[150-150]' inference.output_prefix=test_outputs/test inference.num_designs=10
 ```
 
 Let's look at this in detail.
@@ -258,7 +258,7 @@ Hopefully, it's now obvious how you might make a binder with diffusion! Indeed, 
 If chain B is your target, then you could do it like this:
 
 ```
-./scripts/run_inference.py 'contigmap.contigs=[B1-100/0 100-100]' inference.output_prefix=test_outputs/binder_test inference.num_designs=10
+rfdiffusion 'contigmap.contigs=[B1-100/0 100-100]' inference.output_prefix=test_outputs/binder_test inference.num_designs=10
 ```
 
 This will generate 100 residue long binders to residues 1-100 of chain B.
@@ -324,7 +324,7 @@ or e.g. 2:
 This will process either a single pdb, or a folder of pdbs, and output a secondary structure and adjacency pytorch file, ready to go into the model. For now (although this might not be necessary), you should also generate these files for the target protein (if you're doing PPI), and provide this to the model. You can then use these at inference as follows:
 
 ```
-./scripts/run_inference.py inference.output_prefix=./scaffold_conditioned_test/test scaffoldguided.scaffoldguided=True scaffoldguided.target_pdb=False scaffoldguided.scaffold_dir=./examples/ppi_scaffolds_subset
+rfdiffusion inference.output_prefix=./scaffold_conditioned_test/test scaffoldguided.scaffoldguided=True scaffoldguided.target_pdb=False scaffoldguided.scaffold_dir=./examples/ppi_scaffolds_subset
 ```
 
 A few extra things:
@@ -382,7 +382,7 @@ We're going to switch gears from discussing PPI and look at another task at whic
 
 Here's an example:
 ```
-./scripts/run_inference.py --config-name symmetry  inference.symmetry=tetrahedral 'contigmap.contigs=[360]' inference.output_prefix=test_sample/tetrahedral inference.num_designs=1
+rfdiffusion --config-name symmetry  inference.symmetry=tetrahedral 'contigmap.contigs=[360]' inference.output_prefix=test_sample/tetrahedral inference.num_designs=1
 ```
 
 Here, we've specified a different `config` file (with `--config-name symmetry`). Because symmetric diffusion is quite different from the diffusion described above, we packaged a whole load of symmetry-related configs into a new file (see `configs/inference/symmetry.yml`). Using this config file now puts diffusion in `symmetry-mode`.
@@ -498,7 +498,7 @@ docker run -it --rm --gpus all \
   'contigmap.contigs=[10-40/A163-181/10-40]'
 ```
 
-  This starts the `rfdiffusion` container, mounts the models, inputs, and outputs folders, passes all available GPUs, and then calls the `run_inference.py` script with the parameters specified.
+  This starts the `rfdiffusion` container, mounts the models, inputs, and outputs folders, passes all available GPUs, and then calls the `python -m rfdiffusion.inference` command with the parameters specified.
 
 ### Conclusion
 

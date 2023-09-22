@@ -16,7 +16,7 @@ inference:
   # Set to true for computational efficiency 
   # to avoid memory overhead of modeling all subunits.
   model_only_neighbors: False
-
+  extra_module: null
   # Output directory of samples.
   output_prefix: samples/c2
 
