@@ -13,6 +13,7 @@ import random
 import importlib
 import glob
 import os
+import filelock
 from pathlib import Path
 
 RFDIFFUSION_HOME = Path(os.environ.get('RFDIFFUSION_HOME', Path(rfdiffusion.__file__).parent.parent))
@@ -136,14 +137,15 @@ def main(conf: HydraConfig) -> None:
         out = f"{out_prefix}.pdb"
 
         # Now don't output sidechains
-        writepdb(
-            out,
-            denoised_xyz_stack[0, :, :4],
-            final_seq,
-            sampler.binderlen,
-            chain_idx=sampler.chain_idx,
-            bfacts=bfacts,
-        )
+        with filelock.FileLock(out + '.lock'):
+            writepdb(
+                out,
+                denoised_xyz_stack[0, :, :4],
+                final_seq,
+                sampler.binderlen,
+                chain_idx=sampler.chain_idx,
+                bfacts=bfacts,
+            )
 
         # run metadata
         trb = dict(
