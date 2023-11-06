@@ -65,6 +65,7 @@ class ContigMap:
                 self.sampled_mask,
                 self.contig_length,
                 self.n_inpaint_chains,
+                self.sampled_mask_length_bound,
             ) = self.get_sampled_mask()
             self.receptor_chain = self.chain_order[self.n_inpaint_chains]
             (
@@ -104,6 +105,8 @@ class ContigMap:
                 )
         else:
             self.inpaint_str = self.inpaint_str_tensor
+
+        print(self.ref)
         # get 0-indexed input/output (for trb file)
         (
             self.ref_idx0,
@@ -136,6 +139,7 @@ class ContigMap:
             contig_list = self.contigs[0].strip().split()
             sampled_mask = []
             sampled_mask_length = 0
+            sampled_mask_length_bound = []
             # allow receptor chain to be last in contig string
             if all([i[0].isalpha() for i in contig_list[-1].split("/")]):
                 contig_list[-1] = f"{contig_list[-1]}/0"
@@ -177,6 +181,7 @@ class ContigMap:
                                 subcon_out.append(f"{length_inpaint}-{length_inpaint}")
                                 sampled_mask_length += int(subcon)
                     sampled_mask.append("/".join(subcon_out))
+                    sampled_mask_length_bound.append(sampled_mask_length)
             # check length is compatible
             if self.length is not None:
                 if (
@@ -189,7 +194,7 @@ class ContigMap:
             count += 1
             if count == 100000:  # contig string incompatible with this length
                 sys.exit("Contig string incompatible with --length range")
-        return sampled_mask, sampled_mask_length, inpaint_chains
+        return sampled_mask, sampled_mask_length, inpaint_chains, sampled_mask_length_bound
 
     def expand_sampled_mask(self):
         chain_order = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

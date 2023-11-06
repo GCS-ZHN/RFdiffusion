@@ -309,8 +309,17 @@ class Sampler:
         contig_map=self.contig_map
 
         self.diffusion_mask = self.mask_str
-        self.chain_idx=['A' if i < self.binderlen else 'B' for i in range(L_mapped)]
-        
+        # self.chain_idx=['A' if i < self.binderlen else 'B' for i in range(L_mapped)]
+        self.chain_idx = []
+        length_bound = self.contig_map.sampled_mask_length_bound.copy()
+        for i in range(L_mapped):
+            for j, bound in enumerate(length_bound):
+                if i < bound:
+                    self.chain_idx.append(chr(ord('A') + j))
+                    break
+            else:
+                self.chain_idx.append(chr(ord('A') + len(length_bound)))
+
         ####################################
         ### Generate initial coordinates ###
         ####################################
