@@ -64,8 +64,7 @@ class ContigMap:
             (
                 self.sampled_mask,
                 self.contig_length,
-                self.n_inpaint_chains,
-                self.sampled_mask_length_bound,
+                self.n_inpaint_chains
             ) = self.get_sampled_mask()
             self.receptor_chain = self.chain_order[self.n_inpaint_chains]
             (
@@ -75,6 +74,7 @@ class ContigMap:
                 self.inpaint,
                 self.inpaint_hal,
                 self.inpaint_rf,
+                self.sampled_mask_length_bound,
             ) = self.expand_sampled_mask()
             self.ref = self.inpaint + self.receptor
             self.hal = self.inpaint_hal + self.receptor_hal
@@ -139,7 +139,6 @@ class ContigMap:
             contig_list = self.contigs[0].strip().split()
             sampled_mask = []
             sampled_mask_length = 0
-            sampled_mask_length_bound = []
             # allow receptor chain to be last in contig string
             if all([i[0].isalpha() for i in contig_list[-1].split("/")]):
                 contig_list[-1] = f"{contig_list[-1]}/0"
@@ -181,7 +180,6 @@ class ContigMap:
                                 subcon_out.append(f"{length_inpaint}-{length_inpaint}")
                                 sampled_mask_length += int(subcon)
                     sampled_mask.append("/".join(subcon_out))
-                    sampled_mask_length_bound.append(sampled_mask_length)
             # check length is compatible
             if self.length is not None:
                 if (
@@ -194,7 +192,7 @@ class ContigMap:
             count += 1
             if count == 100000:  # contig string incompatible with this length
                 sys.exit("Contig string incompatible with --length range")
-        return sampled_mask, sampled_mask_length, inpaint_chains, sampled_mask_length_bound
+        return sampled_mask, sampled_mask_length, inpaint_chains
 
     def expand_sampled_mask(self):
         chain_order = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -207,6 +205,8 @@ class ContigMap:
         inpaint_chain_idx = -1
         receptor_chain_break = []
         inpaint_chain_break = []
+        _receptor_mask_length_bound = []
+        _inpaint_mask_length_bound = []
         for con in self.sampled_mask:
             if (
                 all([i[0].isalpha() for i in con.split("/")[:-1]])
@@ -252,6 +252,7 @@ class ContigMap:
                         receptor_chain_break.append(
                             (receptor_idx - 1, 200)
                         )  # 200 aa chain break
+                _receptor_mask_length_bound.append(len(receptor))
             else:
                 inpaint_chain_idx += 1
                 for subcon in con.split("/"):
@@ -286,6 +287,7 @@ class ContigMap:
                         )
                         inpaint_idx += int(subcon.split("-")[0])
                 inpaint_chain_break.append((inpaint_idx - 1, 200))
+                _inpaint_mask_length_bound.append(len(inpaint))
 
         if self.topo is True or inpaint_hal == []:
             receptor_hal = [(i[0], i[1]) for i in receptor_hal]
@@ -301,7 +303,13 @@ class ContigMap:
             inpaint_rf[ch_break[0] :] += ch_break[1]
         for ch_break in receptor_chain_break[:-1]:
             receptor_rf[ch_break[0] :] += ch_break[1]
-
+        sampled_mask_length_bound = []
+        sampled_mask_length_bound.extend(_inpaint_mask_length_bound)
+        if _inpaint_mask_length_bound:
+            inpaint_last_bound = _inpaint_mask_length_bound[-1]
+        else:
+            inpaint_last_bound = 0
+        sampled_mask_length_bound.extend(map(lambda x: x + inpaint_last_bound, _receptor_mask_length_bound))
         return (
             receptor,
             receptor_hal,
@@ -309,6 +317,7 @@ class ContigMap:
             inpaint,
             inpaint_hal,
             inpaint_rf.tolist(),
+            sampled_mask_length_bound
         )
 
     def get_inpaint_seq_str(self, inpaint_s):
